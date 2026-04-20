@@ -270,14 +270,46 @@ for the recommended hardening checklist before production use.
 
 ---
 
-## Models & licensing
+## Licensing & attribution
 
-| Model | HF ID | License | Role |
-|---|---|---|---|
-| Qwen3-ASR-1.7B | `Qwen/Qwen3-ASR-1.7B` | Apache 2.0 | Primary |
-| Whisper-Large-v3 | `openai/whisper-large-v3` | MIT | Secondary / benchmark |
+**STT Studio itself** — this repo's backend, frontend, Dockerfiles, scripts,
+and docs — is released under the **Apache License 2.0**. Full text in
+[`LICENSE`](LICENSE), attribution text in [`NOTICE`](NOTICE).
 
-Backend code: Apache 2.0.
+Copyright © 2026 GenAI Protos.
+
+### Bundled third-party components
+
+| Component | Role | License |
+|---|---|---|
+| **Qwen3-ASR-1.7B** — [`Qwen/Qwen3-ASR-1.7B`](https://huggingface.co/Qwen/Qwen3-ASR-1.7B) | Primary multilingual ASR | Apache 2.0 |
+| **Whisper Large-v3** — [`openai/whisper-large-v3`](https://huggingface.co/openai/whisper-large-v3) | Secondary ASR / benchmark | MIT |
+| **vLLM** (runs both models) | Inference server | Apache 2.0 |
+| **NVIDIA vLLM container** `nvcr.io/nvidia/vllm:26.03-py3` | Runtime image | NVIDIA Deep Learning Container License |
+| **Silero VAD v5** | Server-side voice activity detection | MIT |
+| FastAPI, Starlette, Pydantic, httpx, structlog, tenacity, etc. | Backend framework + libs | Mostly MIT / BSD / Apache 2.0 |
+| Inter, JetBrains Mono (Google Fonts) | UI typography | SIL OFL 1.1 |
+| `data/samples/jfk.wav` | Smoke-test audio | U.S. public domain (JFK 1961 inaugural) |
+
+A **full list** of every third-party project with links and licence notices
+is maintained in **[docs/ATTRIBUTIONS.md](docs/ATTRIBUTIONS.md)**. If you fork
+or deploy this repo, keep that file alongside your distribution — it's how
+you comply with the notice terms of the licences above.
+
+### Brand assets (not Apache 2.0)
+
+The files under `frontend/assets/genaiprotos-*.*` and `GenAI Protos Logo/`
+are **trademarks and branding of GenAI Protos**. They are included so this
+deployment can display them. **They are not covered by the Apache 2.0
+licence** — if you fork STT Studio for your own brand, replace them with
+your own.
+
+### Trademarks
+
+"Qwen" is a trademark of Alibaba Cloud. "Whisper" and "OpenAI" are
+trademarks of OpenAI. "NVIDIA", "DGX Spark", "Grace Blackwell", "CUDA",
+"cuDNN", and "Triton" are trademarks of NVIDIA Corporation. Use of these
+names here is purely descriptive; it does not imply endorsement.
 
 ---
 

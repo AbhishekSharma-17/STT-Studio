@@ -1,0 +1,44 @@
+STT Studio
+Copyright 2026 GenAI Protos
+
+This product includes software developed by GenAI Protos
+(https://genaiprotos.com) and distributed under the terms of the
+Apache License, Version 2.0. See the LICENSE file for the full license text.
+
+---------------------------------------------------------------------
+Third-party components
+---------------------------------------------------------------------
+
+This product bundles, builds on, or depends on software and model
+artifacts developed by third parties, retained under their own licenses.
+A complete list with license summaries is provided in:
+
+    docs/ATTRIBUTIONS.md
+
+Highlights:
+
+* Qwen3-ASR-1.7B (Alibaba Cloud Qwen team) — Apache License 2.0
+* OpenAI Whisper Large-v3 weights — MIT License
+* vLLM (vllm-project) — Apache License 2.0
+* NVIDIA vLLM container image (nvcr.io/nvidia/vllm) — NVIDIA Deep Learning
+  Container License (https://developer.nvidia.com/ngc/nvidia-deep-learning-
+  container-license)
+* Silero VAD (Silero Team) — MIT License
+* FastAPI, Starlette, Pydantic, httpx, structlog, and other Python
+  dependencies — see ATTRIBUTIONS.md for full list
+
+---------------------------------------------------------------------
+Trademarks / brand assets
+---------------------------------------------------------------------
+
+"GenAI Protos" and the GenAI Protos logo/wordmark in the frontend/assets/
+and "GenAI Protos Logo/" directories are trademarks of GenAI Protos. They
+are redistributed here for use inside this project. Use of those brand
+assets in Derivative Works or unrelated projects requires separate
+permission from GenAI Protos and is not granted by the Apache License 2.0.
+
+"Whisper" is a trademark of OpenAI, Inc. "Qwen" is a trademark of
+Alibaba Cloud. "NVIDIA", "DGX Spark", "Grace Blackwell", "Triton", and
+related marks are trademarks of NVIDIA Corporation. Use of those names
+here is solely for the purpose of identifying the underlying technology,
+and does not imply endorsement.
