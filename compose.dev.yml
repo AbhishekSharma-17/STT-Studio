@@ -1,0 +1,21 @@
+# Dev overrides: hot reload for backend, verbose logging, source mount.
+# Usage: docker compose -f compose.yml -f compose.dev.yml up
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: dev
+    environment:
+      - LOG_LEVEL=DEBUG
+      - LOG_FORMAT=console
+    volumes:
+      - ./backend/src:/app/src:ro
+      - ./frontend:/app/frontend:ro
+    command:
+      - uvicorn
+      - stt_backend.main:app
+      - --host=0.0.0.0
+      - --port=3000
+      - --reload
+      - --reload-dir=/app/src

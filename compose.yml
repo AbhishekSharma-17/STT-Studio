@@ -1,0 +1,99 @@
+name: stt-inference
+
+x-gpu-all: &gpu-all
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
+services:
+  qwen:
+    build:
+      context: ./serving/qwen
+      dockerfile: Dockerfile
+    image: stt-inference/qwen:local
+    container_name: stt-qwen
+    restart: unless-stopped
+    <<: *gpu-all
+    ipc: host
+    shm_size: "8gb"
+    environment:
+      - QWEN_MODEL=${QWEN_MODEL:-Qwen/Qwen3-ASR-1.7B}
+      - QWEN_REVISION=${QWEN_REVISION:-main}
+      - QWEN_PORT=8000
+      - QWEN_GPU_MEMORY_UTILIZATION=${QWEN_GPU_MEMORY_UTILIZATION:-0.35}
+      - QWEN_MAX_NUM_SEQS=${QWEN_MAX_NUM_SEQS:-16}
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN:-}
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - ${HF_CACHE_DIR:-./hf_cache}:/root/.cache/huggingface
+    ports:
+      - "${QWEN_PORT:-8000}:8000"
+    networks:
+      - stt
+
+  whisper:
+    build:
+      context: ./serving/whisper
+      dockerfile: Dockerfile
+    image: stt-inference/whisper:local
+    container_name: stt-whisper
+    restart: unless-stopped
+    <<: *gpu-all
+    ipc: host
+    shm_size: "8gb"
+    environment:
+      - WHISPER_MODEL=${WHISPER_MODEL:-openai/whisper-large-v3}
+      - WHISPER_REVISION=${WHISPER_REVISION:-main}
+      - WHISPER_PORT=8001
+      - WHISPER_GPU_MEMORY_UTILIZATION=${WHISPER_GPU_MEMORY_UTILIZATION:-0.35}
+      - WHISPER_MAX_NUM_SEQS=${WHISPER_MAX_NUM_SEQS:-16}
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN:-}
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - ${HF_CACHE_DIR:-./hf_cache}:/root/.cache/huggingface
+    ports:
+      - "${WHISPER_PORT:-8001}:8001"
+    networks:
+      - stt
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: stt-inference/backend:local
+    container_name: stt-backend
+    restart: unless-stopped
+    depends_on:
+      qwen:
+        condition: service_healthy
+      whisper:
+        condition: service_healthy
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=3000
+      - QWEN_URL=http://qwen:8000
+      - WHISPER_URL=http://whisper:8001
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+      - LOG_TRANSCRIPT_CONTENT=${LOG_TRANSCRIPT_CONTENT:-false}
+      - VAD_THRESHOLD=${VAD_THRESHOLD:-0.5}
+      - VAD_MIN_SILENCE_MS=${VAD_MIN_SILENCE_MS:-500}
+      - VAD_MIN_SPEECH_MS=${VAD_MIN_SPEECH_MS:-250}
+      - VAD_MAX_SEGMENT_MS=${VAD_MAX_SEGMENT_MS:-15000}
+      - WS_MAX_SESSION_SECONDS=${WS_MAX_SESSION_SECONDS:-1800}
+      - WS_MAX_AUDIO_QUEUE=${WS_MAX_AUDIO_QUEUE:-200}
+      - VLLM_TIMEOUT_SECONDS=${VLLM_TIMEOUT_SECONDS:-60}
+      - VLLM_RETRIES=${VLLM_RETRIES:-2}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    networks:
+      - stt
+
+networks:
+  stt:
+    driver: bridge

@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# uv
+.uv-cache/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Models + HuggingFace cache (volume-mounted)
+hf_cache/
+models/
+*.bin
+*.safetensors
+*.onnx
+
+# Data
+data/samples/*
+!data/samples/.gitkeep
+
+# Results / benchmarks
+results/
+
+# Logs
+*.log
+logs/
+
+# IDE / tooling
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.claude/
+.aider*
+CLAUDE.md.local
+
+# Docker
+docker-compose.override.yml
+
+# Node (if frontend ever gets built)
+node_modules/

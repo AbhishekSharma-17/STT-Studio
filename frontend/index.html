@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STT Studio — GenAI Protos</title>
+    <meta name="description" content="Arabic + multilingual speech-to-text powered by Qwen3-ASR and Whisper, running locally on NVIDIA DGX Spark." />
+    <link rel="icon" type="image/png" href="/assets/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/style.css?v=7" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- ================= Sidebar ================= -->
+      <aside class="sidebar" aria-label="Workspace">
+        <div class="brand">
+          <img class="brand-logo" src="/assets/genaiprotos-logo.png" alt="GenAI Protos" />
+        </div>
+
+        <div class="side-group">
+          <div class="group-title">Model</div>
+          <div class="seg-control" id="model-seg" role="tablist">
+            <button class="seg-btn active" data-value="qwen3-asr" role="tab" aria-selected="true">
+              <span class="seg-label">Qwen3-ASR</span>
+              <span class="seg-hint">1.7B · Apache 2.0</span>
+            </button>
+            <button class="seg-btn" data-value="whisper" role="tab" aria-selected="false">
+              <span class="seg-label">Whisper</span>
+              <span class="seg-hint">Large-v3 · MIT</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="side-group">
+          <div class="group-title">Language</div>
+          <div class="dropdown" id="language-dropdown">
+            <button type="button" class="dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dropdown-value">
+                <span class="dd-flag">🇸🇦</span>
+                <span class="dd-label">Arabic</span>
+                <span class="dd-code">ar</span>
+              </span>
+              <svg class="dropdown-caret" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M5.5 8l4.5 4.5L14.5 8z" fill="currentColor"/>
+              </svg>
+            </button>
+            <ul class="dropdown-menu" role="listbox" tabindex="-1" hidden>
+              <li role="option" data-value=""><span class="dd-flag">🌐</span><span class="dd-label">Auto-detect</span></li>
+              <li role="option" data-value="ar" aria-selected="true"><span class="dd-flag">🇸🇦</span><span class="dd-label">Arabic</span><span class="dd-code">ar</span></li>
+              <li role="option" data-value="en"><span class="dd-flag">🇺🇸</span><span class="dd-label">English</span><span class="dd-code">en</span></li>
+              <li role="option" data-value="es"><span class="dd-flag">🇪🇸</span><span class="dd-label">Spanish</span><span class="dd-code">es</span></li>
+              <li role="option" data-value="fr"><span class="dd-flag">🇫🇷</span><span class="dd-label">French</span><span class="dd-code">fr</span></li>
+              <li role="option" data-value="de"><span class="dd-flag">🇩🇪</span><span class="dd-label">German</span><span class="dd-code">de</span></li>
+              <li role="option" data-value="zh"><span class="dd-flag">🇨🇳</span><span class="dd-label">Chinese</span><span class="dd-code">zh</span></li>
+              <li role="option" data-value="ja"><span class="dd-flag">🇯🇵</span><span class="dd-label">Japanese</span><span class="dd-code">ja</span></li>
+              <li role="option" data-value="ko"><span class="dd-flag">🇰🇷</span><span class="dd-label">Korean</span><span class="dd-code">ko</span></li>
+              <li role="option" data-value="pt"><span class="dd-flag">🇵🇹</span><span class="dd-label">Portuguese</span><span class="dd-code">pt</span></li>
+              <li role="option" data-value="ru"><span class="dd-flag">🇷🇺</span><span class="dd-label">Russian</span><span class="dd-code">ru</span></li>
+              <li role="option" data-value="tr"><span class="dd-flag">🇹🇷</span><span class="dd-label">Turkish</span><span class="dd-code">tr</span></li>
+              <li role="option" data-value="hi"><span class="dd-flag">🇮🇳</span><span class="dd-label">Hindi</span><span class="dd-code">hi</span></li>
+            </ul>
+            <select id="language" hidden>
+              <option value="">Auto-detect</option>
+              <option value="ar" selected>Arabic (ar)</option>
+              <option value="en">English (en)</option>
+              <option value="es">Spanish (es)</option>
+              <option value="fr">French (fr)</option>
+              <option value="de">German (de)</option>
+              <option value="zh">Chinese (zh)</option>
+              <option value="ja">Japanese (ja)</option>
+              <option value="ko">Korean (ko)</option>
+              <option value="pt">Portuguese (pt)</option>
+              <option value="ru">Russian (ru)</option>
+              <option value="tr">Turkish (tr)</option>
+              <option value="hi">Hindi (hi)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="side-group">
+          <div class="group-title">Options</div>
+          <label class="switch">
+            <input type="checkbox" id="auto-clear" checked />
+            <span class="slider" aria-hidden="true"></span>
+            <span>Clear on new recording</span>
+          </label>
+        </div>
+
+        <div class="side-group stat-group">
+          <div class="group-title">Session stats</div>
+          <div class="stat"><span>Segments</span><strong id="stat-segments">0</strong></div>
+          <div class="stat"><span>Empty</span><strong id="stat-empty">0</strong></div>
+          <div class="stat"><span>Avg&nbsp;RTF</span><strong id="stat-rtf">—</strong></div>
+          <div class="stat"><span>Audio sent</span><strong id="stat-audio">0.0 s</strong></div>
+        </div>
+
+        <div class="sidebar-footer">
+          <a href="/docs" target="_blank" rel="noopener">API docs</a>
+          <span>·</span>
+          <a href="/readyz" target="_blank" rel="noopener">/readyz</a>
+          <span>·</span>
+          <a href="/metrics" target="_blank" rel="noopener">/metrics</a>
+        </div>
+      </aside>
+
+      <!-- ================= Main ================= -->
+      <main class="main">
+        <header class="topbar">
+          <div class="topbar-left" aria-hidden="true"></div>
+          <div class="topbar-center">
+            <h1 class="page-title">STT Studio</h1>
+            <p class="page-sub">Record, transcribe, and compare open-source ASR models on your own hardware.</p>
+          </div>
+          <div class="topbar-right">
+            <span id="stack-status" class="pill pill-neutral" title="Backend /readyz">
+              <span class="pulse"></span>checking…
+            </span>
+          </div>
+        </header>
+
+        <!-- ===== Live card ===== -->
+        <section class="card hero" id="live" aria-label="Live microphone transcription">
+          <div class="hero-head">
+            <div>
+              <h2 class="card-title">Live microphone</h2>
+              <p class="card-sub">Speak naturally. Each pause emits a finalized segment.</p>
+            </div>
+            <div class="hero-actions">
+              <button id="clear-btn"  class="btn btn-ghost" type="button">Clear</button>
+              <button id="copy-btn"   class="btn btn-ghost" type="button">Copy text</button>
+              <button id="export-btn" class="btn btn-ghost" type="button">Export&nbsp;.txt</button>
+            </div>
+          </div>
+
+          <div class="hero-body">
+            <button id="record-btn" class="record-btn" type="button" aria-label="Start recording">
+              <span class="record-inner">
+                <svg class="mic-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M19 12a7 7 0 0 1-14 0M12 19v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                </svg>
+                <svg class="stop-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
+                </svg>
+              </span>
+              <span class="record-ring" aria-hidden="true"></span>
+            </button>
+
+            <div class="record-meta">
+              <div class="record-state">
+                <span id="record-label">Tap to record</span>
+                <span id="record-status" class="pill pill-neutral" aria-live="polite">idle</span>
+              </div>
+              <div class="meter-wrap" aria-hidden="true">
+                <div id="level-meter"><span id="level-fill"></span></div>
+                <span id="level-peak" class="mono">-∞ dB</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="live-telemetry" class="telemetry">
+            <div class="tel-item"><span class="tel-k">Session</span><span class="tel-v mono" data-k="session">—</span></div>
+            <div class="tel-item"><span class="tel-k">Mic rate</span><span class="tel-v mono" data-k="in-rate">—</span></div>
+            <div class="tel-item"><span class="tel-k">Stream</span><span class="tel-v mono" data-k="out-rate">16000 Hz</span></div>
+            <div class="tel-item"><span class="tel-k">Sent</span><span class="tel-v mono" data-k="sent">0 chunks · 0.0 s</span></div>
+            <div class="tel-item"><span class="tel-k">Segments</span><span class="tel-v mono" data-k="segments">0</span></div>
+            <div class="tel-item"><span class="tel-k">Avg RTF</span><span class="tel-v mono" data-k="rtf">—</span></div>
+          </div>
+        </section>
+
+        <!-- ===== Transcript ===== -->
+        <section class="card" aria-label="Transcript">
+          <div class="card-head">
+            <h2 class="card-title">Transcript</h2>
+            <span id="transcript-count" class="chip chip-muted">0 segments</span>
+          </div>
+          <div id="transcript" class="transcript" aria-live="polite" aria-atomic="false"></div>
+        </section>
+
+        <!-- ===== Batch ===== -->
+        <section class="card" id="batch" aria-label="Batch file transcription">
+          <div class="card-head">
+            <h2 class="card-title">Batch file transcription</h2>
+            <p class="card-sub inline">Upload an audio file and get the full transcription in one shot.</p>
+          </div>
+          <form id="upload-form" class="upload">
+            <label class="dropzone" for="file-input" id="dropzone">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" class="dropzone-icon">
+                <path d="M12 15V3m0 0-4 4m4-4 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 15v3a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+              <div class="dropzone-text">
+                <strong id="dropzone-label">Drop a file here, or click to browse</strong>
+                <span>wav, mp3, flac, ogg, m4a, webm — up to 50 MB</span>
+              </div>
+              <input type="file" id="file-input" accept="audio/*,.wav,.mp3,.flac,.ogg,.webm,.m4a" required hidden />
+            </label>
+
+            <div class="upload-actions">
+              <div class="seg-control small" id="file-model-seg" role="tablist">
+                <button type="button" class="seg-btn active" data-value="qwen3-asr">Qwen3-ASR</button>
+                <button type="button" class="seg-btn"        data-value="whisper">Whisper</button>
+              </div>
+              <button type="submit" class="btn btn-primary">Transcribe</button>
+              <span id="file-status" class="pill pill-neutral" aria-live="polite">ready</span>
+            </div>
+          </form>
+          <pre id="file-result" class="result"></pre>
+        </section>
+
+        <!-- ===== Debug ===== -->
+        <section class="card" id="debug" aria-label="Debug">
+          <details>
+            <summary class="card-title clickable">Debug · Raw WebSocket events</summary>
+            <pre id="debug-log" class="debug"></pre>
+          </details>
+        </section>
+
+        <footer class="foot">
+          <div>STT Studio · running on NVIDIA DGX Spark (GB10 · 128 GB unified)</div>
+          <div>
+            <a href="/docs" target="_blank" rel="noopener">OpenAPI</a>
+            <span>·</span>
+            <a href="https://huggingface.co/Qwen/Qwen3-ASR-1.7B" target="_blank" rel="noopener">Qwen3-ASR</a>
+            <span>·</span>
+            <a href="https://huggingface.co/openai/whisper-large-v3" target="_blank" rel="noopener">Whisper-Large-v3</a>
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <script type="module" src="/app.js?v=7"></script>
+  </body>
+</html>
