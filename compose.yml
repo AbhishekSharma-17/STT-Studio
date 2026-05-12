@@ -11,6 +11,7 @@ x-gpu-all: &gpu-all
 
 services:
   qwen:
+    profiles: ["local"]
     build:
       context: ./serving/qwen
       dockerfile: Dockerfile
@@ -36,6 +37,7 @@ services:
       - stt
 
   whisper:
+    profiles: ["local"]
     build:
       context: ./serving/whisper
       dockerfile: Dockerfile
@@ -63,20 +65,26 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: Dockerfile
     image: stt-inference/backend:local
     container_name: stt-backend
     restart: unless-stopped
     depends_on:
       qwen:
         condition: service_healthy
+        required: false
       whisper:
         condition: service_healthy
+        required: false
     environment:
       - BACKEND_HOST=0.0.0.0
       - BACKEND_PORT=3000
-      - QWEN_URL=http://qwen:8000
-      - WHISPER_URL=http://whisper:8001
+      - QWEN_URL=${QWEN_URL:-http://qwen:8000}
+      - WHISPER_URL=${WHISPER_URL:-http://whisper:8001}
+      - QWEN_MODEL=${QWEN_MODEL:-Qwen/Qwen3-ASR-1.7B}
+      - WHISPER_MODEL=${WHISPER_MODEL:-openai/whisper-large-v3}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - STT_PROVIDER=${STT_PROVIDER:-openai}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - LOG_FORMAT=${LOG_FORMAT:-json}
       - LOG_TRANSCRIPT_CONTENT=${LOG_TRANSCRIPT_CONTENT:-false}

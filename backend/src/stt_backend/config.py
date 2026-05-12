@@ -29,6 +29,18 @@ class Settings(BaseSettings):
     qwen_model: str = "Qwen/Qwen3-ASR-1.7B"
     whisper_model: str = "openai/whisper-large-v3"
 
+    # ---- Upstream auth ----
+    # When QWEN_URL / WHISPER_URL point at a hosted provider, this is forwarded
+    # as `Authorization: Bearer ...`. Leave empty for local vLLM. Same key is
+    # used for OpenAI, OpenRouter, Groq, etc.
+    openai_api_key: str = ""
+
+    # ---- Upstream request format ----
+    # "openai" — multipart/form-data with a `file` field (OpenAI, vLLM, Groq).
+    # "openrouter" — JSON body with base64-encoded `input_audio.data`
+    #                (OpenRouter's /api/v1/audio/transcriptions schema).
+    stt_provider: Literal["openai", "openrouter"] = "openai"
+
     # ---- HTTP client tuning ----
     vllm_timeout_seconds: float = 60.0
     vllm_retries: int = 2

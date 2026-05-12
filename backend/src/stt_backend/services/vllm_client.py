@@ -6,6 +6,7 @@ Retries transient failures; raises VllmClientError on persistent ones.
 
 from __future__ import annotations
 
+import base64
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -41,15 +42,47 @@ class _Upstream:
     model_id: str
 
 
+_CONTENT_TYPE_TO_FORMAT = {
+    "audio/wav": "wav",
+    "audio/x-wav": "wav",
+    "audio/wave": "wav",
+    "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
+    "audio/flac": "flac",
+    "audio/x-flac": "flac",
+    "audio/ogg": "ogg",
+    "audio/webm": "webm",
+    "audio/mp4": "m4a",
+    "audio/x-m4a": "m4a",
+    "audio/aac": "aac",
+}
+
+
+def _audio_format(content_type: str, filename: str) -> str:
+    """Best-effort mapping of MIME type / filename to OpenRouter `format` enum."""
+    ct = (content_type or "").split(";")[0].strip().lower()
+    if ct in _CONTENT_TYPE_TO_FORMAT:
+        return _CONTENT_TYPE_TO_FORMAT[ct]
+    if "." in filename:
+        ext = filename.rsplit(".", 1)[-1].lower()
+        if ext in {"wav", "mp3", "flac", "ogg", "webm", "m4a", "aac"}:
+            return ext
+    return "wav"  # WS path always emits WAV, safe default
+
+
 class VllmClient:
     """Async, pooled client. Create one per app; reuse across requests."""
 
     def __init__(self, settings: Settings, client: httpx.AsyncClient | None = None) -> None:
         self._settings = settings
+        default_headers: dict[str, str] = {}
+        if settings.openai_api_key:
+            default_headers["Authorization"] = f"Bearer {settings.openai_api_key}"
         # Reuse a single HTTP client — connection pool, keep-alive, HTTP/2 later.
         self._client = client or httpx.AsyncClient(
             timeout=httpx.Timeout(settings.vllm_timeout_seconds),
             limits=httpx.Limits(max_keepalive_connections=20, max_connections=50),
+            headers=default_headers,
         )
         self._routes: dict[ModelName, _Upstream] = {
             "qwen3-asr": _Upstream(str(settings.qwen_url).rstrip("/"), settings.qwen_model),
@@ -71,17 +104,35 @@ class VllmClient:
         upstream = self._routes[req.model]
         url = f"{upstream.base_url}/v1/audio/transcriptions"
 
-        # OpenAI transcription API is multipart/form-data.
-        files = {"file": (filename, audio, content_type)}
-        data: dict[str, str] = {
-            "model": upstream.model_id,
-            "temperature": str(req.temperature),
-            "response_format": "json",
-        }
-        if req.language:
-            data["language"] = req.language
-        if req.prompt:
-            data["prompt"] = req.prompt
+        post_kwargs: dict[str, Any]
+        if self._settings.stt_provider == "openrouter":
+            # OpenRouter expects JSON with base64-encoded audio rather than
+            # the standard OpenAI multipart/form-data layout.
+            body: dict[str, Any] = {
+                "model": upstream.model_id,
+                "input_audio": {
+                    "data": base64.b64encode(audio).decode("ascii"),
+                    "format": _audio_format(content_type, filename),
+                },
+            }
+            if req.language:
+                body["language"] = req.language
+            if req.prompt:
+                body["prompt"] = req.prompt
+            post_kwargs = {"json": body}
+        else:
+            # OpenAI / vLLM / Groq: multipart/form-data with a `file` field.
+            files = {"file": (filename, audio, content_type)}
+            data: dict[str, str] = {
+                "model": upstream.model_id,
+                "temperature": str(req.temperature),
+                "response_format": "json",
+            }
+            if req.language:
+                data["language"] = req.language
+            if req.prompt:
+                data["prompt"] = req.prompt
+            post_kwargs = {"data": data, "files": files}
 
         attempts = self._settings.vllm_retries + 1
         try:
@@ -93,7 +144,7 @@ class VllmClient:
             ):
                 with attempt:
                     t0 = time.perf_counter()
-                    resp = await self._client.post(url, data=data, files=files)
+                    resp = await self._client.post(url, **post_kwargs)
                     dur_ms = int((time.perf_counter() - t0) * 1000)
         except RetryError as exc:  # pragma: no cover — re-raise is idiomatic w/ reraise=True
             raise VllmClientError("vllm_unreachable", str(exc)) from exc

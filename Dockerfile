@@ -56,6 +56,8 @@ USER app
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
-    CMD curl -fsS http://127.0.0.1:3000/healthz || exit 1
+    CMD curl -fsS "http://127.0.0.1:${PORT:-3000}/healthz" || exit 1
 
-CMD ["uvicorn", "stt_backend.main:app", "--host=0.0.0.0", "--port=3000"]
+# Shell form so $PORT (injected by Railway / Fly / Cloud Run) is expanded.
+# Falls back to 3000 for local docker / docker compose.
+CMD exec uvicorn stt_backend.main:app --host=0.0.0.0 --port="${PORT:-3000}"
